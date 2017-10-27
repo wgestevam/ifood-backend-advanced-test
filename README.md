@@ -23,4 +23,11 @@ Also, briefly elaborate on your solution, architecture details, choice of patter
 
 Fork this repository and submit your code.
 
+##Requirements
+
+* Maven
+* Postgresql with Postgis
+
+
+
  

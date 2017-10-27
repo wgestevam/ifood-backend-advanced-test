@@ -1,9 +1,6 @@
 package com.carlos.ifoodtest.models;
 
-import com.carlos.ifoodtest.models.spotify.SpotifyPlayListTracks;
-import com.carlos.ifoodtest.models.spotify.SpotifyPlaylist;
-import com.carlos.ifoodtest.models.spotify.SpotifyPlaylistTrack;
-import com.carlos.ifoodtest.models.spotify.SpotifyTrack;
+import com.carlos.ifoodtest.models.spotify.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +34,17 @@ public class SpotifyAdapterTest {
 
     @Test
     public void extractTracksFromGenre() throws Exception {
+        SearchSpotifyResponse searchSpotifyResponse = new SearchSpotifyResponse();
+        SpotifyTracks spotifyTracks = new SpotifyTracks();
+        List<SpotifyTrack> items =  new ArrayList<>();
+        SpotifyTrack item =  new SpotifyTrack();
+        item.setName("track name");
+        items.add(item);
+        spotifyTracks.setItems(items);
+        searchSpotifyResponse.setSpotifyTrack(spotifyTracks);
+        List<Track> tracks = SpotifyAdapter.extractTracksFromGenre(searchSpotifyResponse);
 
+        Assert.assertEquals(tracks.get(0).getName(),"track name");
     }
 
 }

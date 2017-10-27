@@ -1,0 +1,17 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+     - "8080:8080"
+    links:
+      - db
+    depends_on:
+      - db
+    command: ["./wait-for-it.sh","db:5432", "--",]
+  db:
+    image: kartoza/postgis
+    environment:
+      POSTGRES_PASSWORD: docker
+      POSTGRES_USER: docker
+      POSTGRES_DBNAME: docker

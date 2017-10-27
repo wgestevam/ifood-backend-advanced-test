@@ -3,6 +3,7 @@ package com.carlos.ifoodtest.services;
 import com.carlos.ifoodtest.models.SpotifyAdapter;
 import com.carlos.ifoodtest.models.Track;
 import com.carlos.ifoodtest.models.spotify.SearchSpotifyResponse;
+import com.carlos.ifoodtest.models.spotify.SpotifyAccessToken;
 import com.carlos.ifoodtest.models.spotify.SpotifyPlaylist;
 import com.carlos.ifoodtest.repositories.TrackRepository;
 import com.carlos.ifoodtest.types.PlaylistType;
@@ -17,8 +18,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 
@@ -34,8 +37,11 @@ public class SpotifyService {
     @Autowired
     TrackRepository trackRepository;
 
-     @Value("${spotify.credentials}")
-     private String spotifyCredentials;
+    @Value("${spotify.credentials}")
+    private String spotifyCredentials;
+
+    @Autowired
+    private SpotifyAccessToken spotifyAccessToken;
 
 
     public List<Track> sugestTracksByWheater(PlaylistType playlistType) {
@@ -63,66 +69,84 @@ public class SpotifyService {
     }
 
     public SearchSpotifyResponse getTracksOnPlayList(String musicType) {
-        String accessToken = null;
-        try {
-            accessToken = getToken();
-        } catch (IOException e) {
-            e.printStackTrace();
+        String accessToken = spotifyAccessToken.getToken();
+
+        try{
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
+            ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
+                    SPOTIFY_API_SEARCH_URL +"?q={musicType}&type=playlist",
+                    HttpMethod.GET,
+                    httpEntity, SearchSpotifyResponse.class, musicType);
+            return response.getBody();
+        } catch (HttpClientErrorException ex){
+            if (tratamentoNaoAutorizado(ex)) return getTracksOnPlayList(musicType);
         }
-        HttpHeaders httpHeaders = new HttpHeaders();
-
-        httpHeaders.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
-        ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
-                SPOTIFY_API_SEARCH_URL +"?q={musicType}&type=playlist",
-                HttpMethod.GET,
-                httpEntity, SearchSpotifyResponse.class, musicType);
-
-        logger.debug(response.getBody().toString());
-
-        return response.getBody();
+        return null;
     }
 
     public SearchSpotifyResponse getMusics(String musicType) {
-        String accessToken = null;
-        try {
-            accessToken = getToken();
-        } catch (IOException e) {
-            e.printStackTrace();
+        String accessToken = spotifyAccessToken.getToken();
+
+
+        try{
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
+            ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
+                    SPOTIFY_API_SEARCH_URL+"?q=genre:{musicType}&type=track",
+                    HttpMethod.GET,
+                    httpEntity, SearchSpotifyResponse.class, musicType);
+
+            return response.getBody();
+        } catch (HttpClientErrorException ex){
+            if (tratamentoNaoAutorizado(ex)) return getMusics(musicType);
         }
-        HttpHeaders httpHeaders = new HttpHeaders();
+        return null;
 
-        httpHeaders.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
-        ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
-                SPOTIFY_API_SEARCH_URL+"?q=genre:{musicType}&type=track",
-                HttpMethod.GET,
-                httpEntity, SearchSpotifyResponse.class, musicType);
+    }
 
-        logger.debug(response.getBody().toString());
-
-        return response.getBody();
+    private boolean tratamentoNaoAutorizado(HttpClientErrorException ex) {
+        if(ex.getRawStatusCode() == 401){
+            logger.error("client não autorizado",ex);
+            spotifyAccessToken.setToken( getTokenSafely());
+            return true;
+        } else {
+            logger.error("Erro desconhecido",ex);
+        }
+        return false;
     }
 
     public SpotifyPlaylist getPlaylist(String url) {
+        String accessToken = spotifyAccessToken.getToken();
+
+        try{
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
+            ResponseEntity<SpotifyPlaylist> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    httpEntity, SpotifyPlaylist.class);
+
+            return response.getBody();
+        } catch (HttpClientErrorException ex){
+            if (tratamentoNaoAutorizado(ex)) return getPlaylist(url);
+        }
+        return null;
+    }
+
+    private String getTokenSafely() {
         String accessToken = null;
         try {
             accessToken = getToken();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("não foi possível conseguir o token",e);
         }
-        HttpHeaders httpHeaders = new HttpHeaders();
-
-        httpHeaders.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
-        ResponseEntity<SpotifyPlaylist> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                httpEntity, SpotifyPlaylist.class);
-
-        logger.debug(response.getBody().toString());
-
-        return response.getBody();
+        return accessToken;
     }
 
     public String getToken() throws IOException {
@@ -175,4 +199,10 @@ public class SpotifyService {
         }
         return trackSugestions;
     }
+
+    @PostConstruct
+    public void initToken(){
+        spotifyAccessToken.setToken(getTokenSafely());
+    }
+
 }

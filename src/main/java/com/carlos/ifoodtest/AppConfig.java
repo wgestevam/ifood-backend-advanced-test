@@ -1,6 +1,7 @@
 package com.carlos.ifoodtest;
 
 
+import com.carlos.ifoodtest.models.spotify.SpotifyAccessToken;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

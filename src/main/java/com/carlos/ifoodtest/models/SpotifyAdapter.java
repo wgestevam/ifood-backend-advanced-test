@@ -22,21 +22,26 @@ public class SpotifyAdapter {
     public static List<Track> extractTracksFromGenre(SearchSpotifyResponse searchSpotifyResponse) {
 
         List<SpotifyTrack> spotifyTracks = searchSpotifyResponse.getSpotifyTrack().getItems();
-        List<Track> tracks = spotifyTracks.stream().map(spotifyTrack ->
-                extractTrackFrom(spotifyTrack)
+        return spotifyTracks.stream().map(SpotifyAdapter::extractTrackFrom
         ).collect(Collectors.toList());
-        return tracks;
     }
 
     private static Track extractTrackFrom(SpotifyTrack spotifyTrack) {
         Track track = new Track();
         track.setName(spotifyTrack.getName());
         track.setExternalId(spotifyTrack.getId());
-        String artistName = spotifyTrack.getArtists().stream().map(
-                        stringObjectMap -> (String) stringObjectMap.get("name"))
-                        .collect(Collectors.joining(", ", "", ""));
-        track.setArtistName(artistName);
-        if(spotifyTrack.getExternalUrls().containsKey("spotify")){
+
+        if(spotifyTrack.getArtists() != null
+           && !spotifyTrack.getArtists().isEmpty()){
+            String artistName = spotifyTrack.getArtists().stream().map(
+                    stringObjectMap -> (String) stringObjectMap.get("name"))
+                    .collect(Collectors.joining(", ", "", ""));
+            track.setArtistName(artistName);
+        }
+
+        if(spotifyTrack.getExternalUrls() !=null &&
+                !spotifyTrack.getExternalUrls().isEmpty()
+                && spotifyTrack.getExternalUrls().containsKey("spotify")){
             track.setLink(spotifyTrack.getExternalUrls().get("spotify"));
         }
 
