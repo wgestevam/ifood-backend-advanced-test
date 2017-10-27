@@ -1,5 +1,8 @@
 package com.carlos.ifoodtest.models;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 
 @Entity
@@ -36,5 +39,29 @@ public class CityNameSynonym {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CityNameSynonym that = (CityNameSynonym) o;
+
+        return new EqualsBuilder()
+                .append(id, that.id)
+                .append(city, that.city)
+                .append(synonym, that.synonym)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(city)
+                .append(synonym)
+                .toHashCode();
     }
 }

@@ -1,6 +1,8 @@
 package com.carlos.ifoodtest.models;
 
 import com.vividsolutions.jts.geom.Point;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -77,5 +79,37 @@ public class City {
 
     public void setLocation(Point location) {
         this.location = location;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        City city = (City) o;
+
+        return new EqualsBuilder()
+                .append(temp, city.temp)
+                .append(id, city.id)
+                .append(externalId, city.externalId)
+                .append(name, city.name)
+                .append(cityNameSynonyms, city.cityNameSynonyms)
+                .append(location, city.location)
+                .append(updatedAt, city.updatedAt)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(externalId)
+                .append(name)
+                .append(temp)
+                .append(cityNameSynonyms)
+                .append(location)
+                .append(updatedAt)
+                .toHashCode();
     }
 }

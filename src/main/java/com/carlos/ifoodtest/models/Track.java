@@ -1,6 +1,9 @@
 package com.carlos.ifoodtest.models;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -74,5 +77,35 @@ public class Track {
 
     public void setArtistName(String artistName) {
         this.artistName = artistName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Track track = (Track) o;
+
+        return new EqualsBuilder()
+                .append(id, track.id)
+                .append(name, track.name)
+                .append(link, track.link)
+                .append(artistName, track.artistName)
+                .append(sugestionList, track.sugestionList)
+                .append(externalId, track.externalId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(name)
+                .append(link)
+                .append(artistName)
+                .append(sugestionList)
+                .append(externalId)
+                .toHashCode();
     }
 }

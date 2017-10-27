@@ -4,6 +4,7 @@ package com.carlos.ifoodtest;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.jms.annotation.EnableJms;
@@ -23,6 +24,7 @@ import java.util.List;
 @EnableJpaRepositories(basePackages = {"com.carlos.ifoodtest.repositories"})
 @EnableTransactionManagement
 @EnableJms
+@PropertySource("classpath:/secrets.properties")
 public class AppConfig {
     @Bean
     public RestTemplate getRestTemplate(LogRequestFilter logrequest) {
@@ -31,7 +33,6 @@ public class AppConfig {
         interceptors.add(logrequest);
         restTemplate.setInterceptors(interceptors);
 
-
         return restTemplate;
     }
 
@@ -39,13 +40,11 @@ public class AppConfig {
     public JmsListenerContainerFactory<?> myFactory(ConnectionFactory connectionFactory,
                                                     DefaultJmsListenerContainerFactoryConfigurer configurer) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-        // This provides all boot's default to this factory, including the message converter
         configurer.configure(factory, connectionFactory);
-
         return factory;
     }
 
-    @Bean // Serialize message content to json using TextMessage
+    @Bean
     public MessageConverter jacksonJmsMessageConverter() {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
         converter.setTargetType(MessageType.TEXT);

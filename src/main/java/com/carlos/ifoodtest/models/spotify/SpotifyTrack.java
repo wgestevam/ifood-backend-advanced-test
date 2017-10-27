@@ -2,12 +2,17 @@ package com.carlos.ifoodtest.models.spotify;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SpotifyTrack {
+public class SpotifyTrack implements Serializable{
+    private static final long serialVersionUID = -6734578320604824246L;
+
     private String name;
     private String id;
     private Map<String, Object> album;
@@ -57,5 +62,33 @@ public class SpotifyTrack {
 
     public void setExternalUrls(Map<String, String> externalUrls) {
         this.externalUrls = externalUrls;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SpotifyTrack that = (SpotifyTrack) o;
+
+        return new EqualsBuilder()
+                .append(name, that.name)
+                .append(id, that.id)
+                .append(album, that.album)
+                .append(artists, that.artists)
+                .append(externalUrls, that.externalUrls)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(name)
+                .append(id)
+                .append(album)
+                .append(artists)
+                .append(externalUrls)
+                .toHashCode();
     }
 }

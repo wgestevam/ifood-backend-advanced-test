@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,16 +25,33 @@ import java.util.List;
 @Service
 public class SpotifyService {
 
+    public static final String SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
+    public static final String SPOTIFY_API_SEARCH_URL = "https://api.spotify.com/v1/search";
     private static final Logger logger = LoggerFactory.getLogger(SpotifyService.class);
-
     @Autowired
     RestTemplate restTemplate;
 
     @Autowired
     TrackRepository trackRepository;
 
+     @Value("${spotify.credentials}")
+     private String spotifyCredentials;
+
+
     public List<Track> sugestTracksByWheater(PlaylistType playlistType) {
-        return trackRepository.findAllBySugestionList(playlistType.getMusicType());
+        try{
+            return trackRepository.findAllBySugestionList(playlistType.getMusicType());
+        }catch (Exception ex){
+            logger.error("Banco fora do ar", ex);
+            return listTracksPlaylistTypeFinalTracks(playlistType);
+        }
+    }
+
+    private List<Track> listTracksPlaylistTypeFinalTracks(PlaylistType playlistType) {
+
+        SearchSpotifyResponse searchSpotifyResponse = listTracksPlaylistType(playlistType);
+
+        return getTracksFromSearchResponse(playlistType, searchSpotifyResponse);
     }
 
     public SearchSpotifyResponse listTracksPlaylistType(PlaylistType playlistType) {
@@ -56,7 +74,7 @@ public class SpotifyService {
         httpHeaders.set("Authorization", "Bearer " + accessToken);
         HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
         ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
-                "https://api.spotify.com/v1/search?q={musicType}&type=playlist",
+                SPOTIFY_API_SEARCH_URL +"?q={musicType}&type=playlist",
                 HttpMethod.GET,
                 httpEntity, SearchSpotifyResponse.class, musicType);
 
@@ -77,7 +95,7 @@ public class SpotifyService {
         httpHeaders.set("Authorization", "Bearer " + accessToken);
         HttpEntity<?> httpEntity = new HttpEntity<>(httpHeaders);
         ResponseEntity<SearchSpotifyResponse> response = restTemplate.exchange(
-                "https://api.spotify.com/v1/search?q=genre:{musicType}&type=track",
+                SPOTIFY_API_SEARCH_URL+"?q=genre:{musicType}&type=track",
                 HttpMethod.GET,
                 httpEntity, SearchSpotifyResponse.class, musicType);
 
@@ -110,18 +128,18 @@ public class SpotifyService {
     public String getToken() throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        httpHeaders.set("Authorization", "Basic Y2E0NjdmODYyNjJkNDdkZmI5ZDMyY2M3YTdhNDgyOWI6ZTVlZDZiMWFhY2EyNDU2MmI3YzU5MmM5YjFlZjM5Njk=");
+        httpHeaders.set("Authorization", String.format("Basic %s", spotifyCredentials));
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
         params.add("grant_type", "client_credentials");
 
         HttpEntity<?> httpEntity = new HttpEntity<>(params, httpHeaders);
 
-        ResponseEntity<String> response = restTemplate.exchange("https://accounts.spotify.com/api/token", HttpMethod.POST, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(SPOTIFY_TOKEN_URL, HttpMethod.POST, httpEntity, String.class);
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(response.getBody());
-        return (String) jsonNode.get("access_token").asText();
+        return jsonNode.get("access_token").asText();
     }
 
     @Transactional
@@ -131,6 +149,20 @@ public class SpotifyService {
         List<Track> savedTrackList = trackRepository.findAllBySugestionList(playlistType.getMusicType());
 
 
+        List<Track> trackSugestions = getTracksFromSearchResponse(playlistType, searchSpotifyResponse);
+
+        if(trackSugestions != null){
+            trackSugestions.forEach(
+                    track -> track.setSugestionList(playlistType.getMusicType())
+            );
+        }
+
+        trackRepository.delete(savedTrackList);
+        trackRepository.save(trackSugestions);
+
+    }
+
+    private List<Track> getTracksFromSearchResponse(PlaylistType playlistType, SearchSpotifyResponse searchSpotifyResponse) {
         List<Track> trackSugestions = null;
         if (playlistType.getSpotifyType() == SpotifySearchType.GENRE) {
             trackSugestions = SpotifyAdapter.extractTracksFromGenre(searchSpotifyResponse);
@@ -141,15 +173,6 @@ public class SpotifyService {
                 trackSugestions = SpotifyAdapter.extractTracksFromPlayList(spotifyPlaylist);
             }
         }
-
-        if(trackSugestions != null){
-            trackSugestions.stream().forEach(
-                    track -> track.setSugestionList(playlistType.getMusicType())
-            );
-        }
-
-        trackRepository.delete(savedTrackList);
-        trackRepository.save(trackSugestions);
-
+        return trackSugestions;
     }
 }

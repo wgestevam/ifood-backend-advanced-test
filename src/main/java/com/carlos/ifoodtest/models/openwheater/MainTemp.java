@@ -1,6 +1,11 @@
 package com.carlos.ifoodtest.models.openwheater;
 
-public class MainTemp {
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+public class MainTemp  {
+
+    private static final long serialVersionUID = 3010864521391346282L;
 
     private int temp;
 
@@ -13,9 +18,22 @@ public class MainTemp {
     }
 
     @Override
-    public String toString() {
-        return "MainTemp{" +
-                "temp=" + temp +
-                '}';
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MainTemp mainTemp = (MainTemp) o;
+
+        return new EqualsBuilder()
+                .append(temp, mainTemp.temp)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(temp)
+                .toHashCode();
     }
 }

@@ -3,9 +3,12 @@ package com.carlos.ifoodtest.models.spotify;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class SearchSpotifyResponse {
+import java.io.Serializable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SearchSpotifyResponse implements Serializable {
+
+    private static final long serialVersionUID = -5768678500724277852L;
     @JsonProperty("tracks")
     private SpotifyTracks spotifyTrack;
 
