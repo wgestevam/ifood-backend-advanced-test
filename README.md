@@ -23,11 +23,45 @@ Also, briefly elaborate on your solution, architecture details, choice of patter
 
 Fork this repository and submit your code.
 
-##Requirements
+## Requirements to run
+
+* Java 8
+* Maven
+* Docker 
+* Docker compose
+
+### Requiments to develop
 
 * Maven
-* Postgresql with Postgis
+* Java 8
+* Postgresql with posgis
 
 
+### Instrunctions to run
+Clone this repository
+```
+$ git clone git@github.com:cadorfo/ifood-backend-advanced-test.git 
+$ cd ifood-backend-advanced-test
 
- 
+```
+
+#### execute with docker
+Execute this file in repository root directory
+```
+$ ./createDocker.sh
+```
+#### execute with springboot maven plugin
+
+You may have postgres with postgis plugin installed!
+
+Change content `/src/main/resources/application-dev.properties`
+
+Execute the following command
+```
+$ mvn spring-boot:run
+```
+Endpoints:
+
+* `http://localhost:8080/sugestions?city=Campinas`
+* `http://localhost:8080/sugestions?lat=-15.7801&lon=-47.92`
+

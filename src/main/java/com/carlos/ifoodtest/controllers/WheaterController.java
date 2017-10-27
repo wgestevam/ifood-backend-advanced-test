@@ -1,6 +1,7 @@
 package com.carlos.ifoodtest.controllers;
 
 import com.carlos.ifoodtest.models.Track;
+import com.carlos.ifoodtest.models.TrackDTO;
 import com.carlos.ifoodtest.services.SugestionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class WheaterController {
@@ -22,7 +24,7 @@ public class WheaterController {
     private SugestionService sugestionService;
 
     @RequestMapping("sugestions")
-    public List<Track> getWheaterResponse(@RequestParam(value = "city", required = false) String city,
+    public List<TrackDTO> getWheaterResponse(@RequestParam(value = "city", required = false) String city,
                                           @RequestParam(value = "lat", required = false) Double lat,
                                           @RequestParam(value = "lon", required = false) Double lon
     ) {
@@ -45,8 +47,7 @@ public class WheaterController {
             gap = ChronoUnit.MILLIS.between(instant, instant2);
         }
 
-
         logger.debug("Tempo gasto total: " + gap);
-        return tracks;
+        return tracks.stream().map(TrackDTO::new).collect(Collectors.toList());
     }
 }
