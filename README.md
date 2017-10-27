@@ -54,7 +54,7 @@ $ ./createDocker.sh
 
 You may have postgres with postgis plugin installed!
 
-Change content `/src/main/resources/application-dev.properties`
+Change content of file `src/main/resources/application-dev.properties`
 
 Execute the following command
 ```
